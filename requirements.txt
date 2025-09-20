@@ -1,0 +1,7 @@
+#Core
+boto3          # Core AWS SDK for Python (DynamoDB, Lambda, API Gateway, SNS, SageMaker basic)
+sagemaker      # High-level SDK for training/invoking SageMaker models
+python-dotenv  # Load AWS credentials & configs from .env file
+fastapi        # To build your backend API endpoints
+uvicorn        # ASGI server to run FastAPI
+pydantic       # Data validation (request/response models)
