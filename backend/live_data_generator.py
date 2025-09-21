@@ -85,23 +85,22 @@ class EnhancedCrowdLiveEvents:
             print(f'✅ Table {self.table_name} created successfully')
     
     def create_event(self, event_data):
-        """Create event with real-time ML prediction"""
+        """Send event to API Gateway for Lambda processing and DB upload"""
+        import requests
+        api_url = "https://jzmnoru4sa.execute-api.us-east-1.amazonaws.com/stage1/run-demo"
         try:
-            # Add ML prediction if system is available
-            if self.ml_system:
-                try:
-                    ml_prediction = self.ml_system.predict(event_data)
-                    event_data.update(ml_prediction)
-                    event_data['prediction_timestamp'] = datetime.now(timezone.utc).isoformat()
-                    event_data['prediction_source'] = 'SageMaker_Enhanced'
-                except Exception as e:
-                    print(f"⚠️ ML prediction failed: {e}")
-                    event_data['prediction_error'] = str(e)
-            
-            return self.table.put_item(Item=event_data)
+            response = requests.post(api_url, json=event_data, timeout=10)
+            if response.status_code == 200:
+                print(f"✅ Event sent to Lambda: {event_data.get('event_id', '')}")
+                return response.json()
+            else:
+                print(f"❌ API error {response.status_code}: {response.text}")
+                # Fallback: store locally if API fails
+                return self.table.put_item(Item=event_data)
         except Exception as e:
-            print(f"❌ Event creation failed: {e}")
-            return None
+            print(f"❌ API request failed: {e}")
+            # Fallback: store locally if request fails
+            return self.table.put_item(Item=event_data)
     
     def get_all_events(self):
         response = self.table.scan()

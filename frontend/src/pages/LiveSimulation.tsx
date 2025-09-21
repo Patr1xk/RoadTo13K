@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { motion } from 'framer-motion';
 import { QueueFlowDiagram } from '../components/QueueFlowDiagram';
 import { SummaryCards } from '../components/SummaryCards';
@@ -91,6 +92,43 @@ const LiveSimulationContent: React.FC = () => {
   }>({ isVisible: false, status: 'success', message: '' });
   
   const [data, setData] = useState(generateMockData());
+  const [simStatus, setSimStatus] = useState<'idle' | 'starting' | 'running' | 'error'>('idle');
+  // Handler to trigger backend simulation
+  const handleStartSimulation = async () => {
+    setSimStatus('starting');
+    try {
+      const res = await axios.post('http://localhost:5001/start-simulation');
+      if (res.status === 200 && res.data.status === 'started') {
+        setSimStatus('running');
+        setNotificationStatus({
+          isVisible: true,
+          status: 'success',
+          message: 'Live simulation started!'
+        });
+      } else if (res.status === 409) {
+        setSimStatus('running');
+        setNotificationStatus({
+          isVisible: true,
+          status: 'success',
+          message: 'Simulation is already running.'
+        });
+      } else {
+        setSimStatus('error');
+        setNotificationStatus({
+          isVisible: true,
+          status: 'error',
+          message: 'Failed to start simulation.'
+        });
+      }
+    } catch (err) {
+      setSimStatus('error');
+      setNotificationStatus({
+        isVisible: true,
+        status: 'error',
+        message: 'Could not connect to backend server.'
+      });
+    }
+  };
   const [queueStations, setQueueStations] = useState<QueueStationData[]>([]);
   const [isInsightsPaused, setIsInsightsPaused] = useState(false);
   const { insights, newInsightIds } = useActionableInsights(queueStations);
@@ -180,34 +218,42 @@ const LiveSimulationContent: React.FC = () => {
       <SimulationTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'live' && (
-        <motion.div
-          key="live"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-6"
-        >
-          <SummaryCards metrics={data.summaryMetrics} isLive={true} />
-          
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2">
-              <QueueFlowDiagram 
-                isLive={true}
-                onStatsUpdate={handleQueueStatsUpdate}
-              />
-            </div>
-            
-            <div className="space-y-6">
-              <TimeDistributionChart distribution={data.timeDistribution} />
-              <RecommendationInsightsPanel 
-                insights={insights}
-                newInsightIds={newInsightIds}
-                onPauseChange={handleInsightsPauseChange}
-              />
-            </div>
+        <>
+          <div className="mb-4">
+            <button
+              className="px-6 py-2 rounded bg-green-600 text-white font-bold hover:bg-green-700 transition"
+              onClick={handleStartSimulation}
+              disabled={simStatus === 'starting' || simStatus === 'running'}
+            >
+              {simStatus === 'starting' ? 'Starting...' : simStatus === 'running' ? 'Simulation Running' : 'Run Live Simulation'}
+            </button>
           </div>
-          
-          {queueStations.length > 0 && <QueueStatsTable stations={queueStations} />}
-        </motion.div>
+          <motion.div
+            key="live"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            <SummaryCards metrics={data.summaryMetrics} isLive={true} />
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="xl:col-span-2">
+                <QueueFlowDiagram 
+                  isLive={true}
+                  onStatsUpdate={handleQueueStatsUpdate}
+                />
+              </div>
+              <div className="space-y-6">
+                <TimeDistributionChart distribution={data.timeDistribution} />
+                <RecommendationInsightsPanel 
+                  insights={insights}
+                  newInsightIds={newInsightIds}
+                  onPauseChange={handleInsightsPauseChange}
+                />
+              </div>
+            </div>
+            {queueStations.length > 0 && <QueueStatsTable stations={queueStations} />}
+          </motion.div>
+        </>
       )}
 
       {activeTab === 'past' && (
