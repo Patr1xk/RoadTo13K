@@ -23,6 +23,42 @@ def print_banner():
     print("=" * 60)
     print()
 
+def run_live_simulation():
+    """Run live data generator with DynamoDB real-time analytics"""
+    print("\n🎬 LIVE SIMULATION - DYNAMODB REAL-TIME ANALYTICS")
+    print("=" * 60)
+    print("This will:")
+    print("1.  Generate live crowd events")
+    print("2.  Store data in DynamoDB 'crowd_live_events' table")
+    print("3.  Show real-time predictions and analytics")
+    print("4.  Simulate Malaysian event scenarios")
+    print("=" * 60)
+    
+    confirm = input("\n Start live simulation? (y/n): ").strip().lower()
+    if confirm != 'y':
+        print(" Live simulation cancelled.")
+        return
+    
+    try:
+        print("\n🚀 Starting live simulation...")
+        print("Press Ctrl+C to stop early")
+        
+        # Run the live data generator directly
+        result = subprocess.run([
+            sys.executable, "backend/live_data_generator.py", "--live"
+        ], capture_output=False, text=True)
+        
+        if result.returncode == 0:
+            print("\n✅ Live simulation completed successfully!")
+            print("📊 Check DynamoDB 'crowd_live_events' table for real-time data")
+        else:
+            print(f"\n❌ Live simulation had issues (exit code: {result.returncode})")
+            
+    except KeyboardInterrupt:
+        print("\n\n⏹️  Live simulation stopped by user")
+    except Exception as e:
+        print(f"\n❌ Error running live simulation: {e}")
+
 def show_menu():
     """Show main menu options"""
     print(" AVAILABLE COMMANDS:")
@@ -30,9 +66,10 @@ def show_menu():
     print("1.  AUTO DEPLOY EVERYTHING (Recommended)")
     print("2.  Deploy API Gateway Only") 
     print("3.  Run Local Demo")
-    print("4.  Validate AWS Deployment")
-    print("5.  Show API Documentation")
-    print("6.  Exit")
+    print("4.  Run Live Simulation (DynamoDB Real-time)")
+    print("5.  Validate AWS Deployment")
+    print("6.  Show API Documentation")
+    print("7.  Exit")
     print("-" * 40)
 
 def run_backend_script(script_name):
@@ -169,7 +206,7 @@ def main():
     while True:
         try:
             show_menu()
-            choice = input("\n Enter your choice (1-6): ").strip()
+            choice = input("\n Enter your choice (1-7): ").strip()
             
             if choice == "1":
                 auto_deploy_everything()
@@ -182,18 +219,21 @@ def main():
                 run_backend_script("run_demo.py")
                 
             elif choice == "4":
+                run_live_simulation()
+                
+            elif choice == "5":
                 print("\n VALIDATING AWS DEPLOYMENT...")
                 run_backend_script("validate_aws_deployment.py")
                 
-            elif choice == "5":
+            elif choice == "6":
                 show_documentation()
                 
-            elif choice == "6":
+            elif choice == "7":
                 print("\n Goodbye! Good luck with your hackathon!")
                 break
                 
             else:
-                print(" Invalid choice. Please enter 1-6.")
+                print(" Invalid choice. Please enter 1-7.")
             
             input("\nPress Enter to continue...")
             print("\n" + "="*60 + "\n")

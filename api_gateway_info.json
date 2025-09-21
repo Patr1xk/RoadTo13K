@@ -1,9 +1,9 @@
 {
-  "api_id": "91tci351oe",
-  "api_url": "https://91tci351oe.execute-api.us-east-1.amazonaws.com/prod",
+  "api_id": "liw5frluzl",
+  "api_url": "https://liw5frluzl.execute-api.us-east-1.amazonaws.com/prod",
   "endpoints": [
-    "https://91tci351oe.execute-api.us-east-1.amazonaws.com/prod/run-demo",
-    "https://91tci351oe.execute-api.us-east-1.amazonaws.com/prod/evaluation"
+    "https://liw5frluzl.execute-api.us-east-1.amazonaws.com/prod/run-demo",
+    "https://liw5frluzl.execute-api.us-east-1.amazonaws.com/prod/evaluation"
   ],
   "description": "Enhanced API with complete demo + evaluation"
 }
