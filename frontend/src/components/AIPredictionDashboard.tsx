@@ -82,7 +82,7 @@ const AIPredictionDashboard: React.FC = () => {
     alertLevel: 'medium'
   });
 
-  const API_BASE = 'https://91tci351oe.execute-api.us-east-1.amazonaws.com/prod';
+  const API_BASE = 'https://jzmnoru4sa.execute-api.us-east-1.amazonaws.com/test';
 
   const runDemoPrediction = async () => {
     if (!selectedVenue) return;
@@ -94,8 +94,7 @@ const AIPredictionDashboard: React.FC = () => {
       const response = await fetch(`${API_BASE}/run-demo`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           venue_type: selectedVenue.type,
@@ -105,15 +104,24 @@ const AIPredictionDashboard: React.FC = () => {
       });
 
       if (!response.ok) {
+        const text = await response.text();
+        console.error('API error response:', text);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
-      
-      if (result.success) {
+      let result = null;
+      try {
+        result = await response.json();
+      } catch (jsonErr) {
+        console.error('Failed to parse JSON:', jsonErr);
+        throw new Error('Invalid JSON response from API');
+      }
+
+      console.log('API response:', result);
+      if (result && result.success) {
         setDemoResults(result.data);
       } else {
-        throw new Error('Demo prediction failed');
+        throw new Error('Demo prediction failed: ' + JSON.stringify(result));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Demo prediction failed');
@@ -129,10 +137,7 @@ const AIPredictionDashboard: React.FC = () => {
     
     try {
       const response = await fetch(`${API_BASE}/evaluation`, {
-        method: 'GET',
-        headers: {
-          'Access-Control-Allow-Origin': '*'
-        }
+        method: 'GET'
       });
 
       if (!response.ok) {
