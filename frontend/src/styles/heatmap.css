@@ -1,0 +1,166 @@
+/* Heatmap specific styles */
+.heatmap-overlay {
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.heatmap-point {
+  border-radius: 50%;
+  animation: heatmap-pulse 2s ease-in-out infinite;
+}
+
+@keyframes heatmap-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.heatmap-intensity-low {
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.6) 0%, rgba(34, 197, 94, 0.3) 50%, transparent 100%);
+}
+
+.heatmap-intensity-medium {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.7) 0%, rgba(245, 158, 11, 0.4) 50%, transparent 100%);
+}
+
+.heatmap-intensity-high {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.8) 0%, rgba(239, 68, 68, 0.5) 50%, transparent 100%);
+}
+
+.heatmap-intensity-critical {
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.9) 0%, rgba(220, 38, 38, 0.6) 50%, transparent 100%);
+  animation: heatmap-critical-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes heatmap-critical-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+}
+
+/* Traffic recommendation styles */
+.recommendation-card {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.recommendation-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Enhanced glass morphism */
+.glass-card-enhanced {
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Zone overlay enhancements */
+.zone-overlay {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.zone-overlay:hover {
+  transform: scale(1.02);
+  z-index: 20;
+}
+
+/* Traffic flow animations */
+.traffic-flow-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.traffic-flow-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: traffic-flow 2s ease-in-out infinite;
+}
+
+@keyframes traffic-flow {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Zone recommendation alerts */
+.zone-recommendation-alert {
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Crew selection modal */
+.crew-selection-modal {
+  backdrop-filter: blur(20px);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.crew-member-card {
+  transition: all 0.2s ease;
+}
+
+.crew-member-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.crew-status-online {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.crew-status-busy {
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.crew-status-offline {
+  background: #6b7280;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .heatmap-point {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .recommendation-card {
+    padding: 12px;
+  }
+  
+  .zone-recommendation-alert {
+    font-size: 11px;
+    padding: 8px;
+  }
+  
+  .crew-selection-modal {
+    margin: 16px;
+    max-height: calc(100vh - 32px);
+  }
+}

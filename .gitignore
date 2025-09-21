@@ -52,9 +52,7 @@ logs/
 
 # Node modules (if any)
 node_modules/
-
-# Frontend (separate git repo)
-frontend/
+frontend/node_modules/
 
 # Model files (large)
 *.pkl
