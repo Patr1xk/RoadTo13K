@@ -28,47 +28,67 @@ except dynamodb.meta.client.exceptions.ResourceNotFoundException:
     print('Table created successfully')
 
 # Read CSV file
-df = pd.read_csv('dataset\\synthetic_events_500.csv')
+df = pd.read_csv('dataset\\enhanced_crowd_flow_enhance.csv')
 
 # Function to convert row to nested JSON
 def row_to_nosql(row):
+    from decimal import Decimal
     return {
         "event_id": row["event_id"],
-        "timestamp": row["timestamp"],
-        "density_estimate": int(row["density_estimate"]),
-        "expected_crowd_size": int(row["expected_crowd_size"]),
+        "timestamp": row["time"],
+        "scenario_phase": row["scenario_phase"],
+        "weather_condition": row["weather_condition"],
+        "crowd_outside": int(row["crowd_outside"]),
+        "transport_arrival_next_10min": int(row["transport_arrival_next_10min"]),
+        "crowd_growth_rate": Decimal(str(row["crowd_growth_rate"])),
+        "expected_crowd_size": int(row["crowd_outside"] + row["section_a"] + row["section_b"] + row["section_c"] + row["section_d"]),
         "gate_data": {
-            "GateA": row["GateA"],
-            "GateB": row["GateB"],
-            "GateC": row["GateC"],
-            "GateD": row["GateD"]
+            "GateA": row["gate_a_status"],
+            "GateB": row["gate_b_status"],
+            "GateC": row["gate_c_status"],
+            "GateD": row["gate_d_status"]
+        },
+        "queue_data": {
+            "GateA": int(row["gate_a_queue"]),
+            "GateB": int(row["gate_b_queue"]),
+            "GateC": int(row["gate_c_queue"]),
+            "GateD": int(row["gate_d_queue"])
         },
         "heatmap_data": {
-            "Food Court": int(row["Food Court"]),
-            "SectionA": int(row["SectionA"]),
-            "SectionB": int(row["SectionB"]),
-            "SectionC": int(row["SectionC"]),
-            "SectionD": int(row["SectionD"]),
-            "Toilet": int(row["Toilet"])
+            "Food Court": int(row["food_court"]),
+            "SectionA": int(row["section_a"]),
+            "SectionB": int(row["section_b"]),
+            "SectionC": int(row["section_c"]),
+            "SectionD": int(row["section_d"]),
+            "Toilet": int(row["toilet"])
         },
-        "recommendations": row["recommendations"].split(";"),  # convert back to list
+        "facility_demand_forecast": row["facility_demand_forecast"],
+        "parking_occupancy_percent": Decimal(str(row["parking_occupancy_percent"])),
+        "emergency_status": row["emergency_status"],
+        "staff_security": int(row["staff_security"]),
+        "staff_food": int(row["staff_food"]),
+        "staff_medical": int(row["staff_medical"]),
+        "vip_early_entry": bool(row["vip_early_entry"]),
         "risk_level": row["risk_level"],
-        "scenario_type": row["scenario_type"],
-        "status": row["status"]
+        "predicted_risk_next_15min": row["predicted_risk_next_15min"],
+        "bottleneck_prediction": row["bottleneck_prediction"],
+        "recommended_action": row["recommended_action"],
+        "scenario_type": row["scenario_phase"],
+        "status": "Historical"
     }
 
 
-# Convert all rows
+# Convert all rows (now all IDs are unique)
 nosql_data = [row_to_nosql(row) for _, row in df.iterrows()]
 
-# Insert into DynamoDB using batch operations (much faster)
+# Batch insert - should work perfectly now
 with table.batch_writer() as batch:
     for i, item in enumerate(nosql_data):
         batch.put_item(Item=item)
-        if (i + 1) % 25 == 0:  # Print progress every 25 items
+        if (i + 1) % 25 == 0:
             print(f'Inserted {i + 1}/{len(nosql_data)} items')
 
-print(f'Successfully inserted {len(nosql_data)} events into DynamoDB')
+print(f'Completed processing {len(nosql_data)} events')
 
 # Also save to JSON file for backup
 # with open("synthetic_events_500_nosql.json", "w") as f:

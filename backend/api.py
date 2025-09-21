@@ -15,9 +15,12 @@ live_db = CrowdLiveEvents()
 class EventCreate(BaseModel):
     event_id: str
     timestamp: str
-    density_estimate: int
+    scenario_phase: str
+    weather_condition: str
+    crowd_outside: int
     expected_crowd_size: int
     gate_data: Dict[str, str]
+    queue_data: Dict[str, int]
     heatmap_data: Dict[str, int]
     recommendations: List[str]
     risk_level: str
@@ -26,9 +29,12 @@ class EventCreate(BaseModel):
 
 class EventUpdate(BaseModel):
     timestamp: Optional[str] = None
-    density_estimate: Optional[int] = None
+    scenario_phase: Optional[str] = None
+    weather_condition: Optional[str] = None
+    crowd_outside: Optional[int] = None
     expected_crowd_size: Optional[int] = None
     gate_data: Optional[Dict[str, str]] = None
+    queue_data: Optional[Dict[str, int]] = None
     heatmap_data: Optional[Dict[str, int]] = None
     recommendations: Optional[List[str]] = None
     risk_level: Optional[str] = None
@@ -38,9 +44,12 @@ class EventUpdate(BaseModel):
 class LiveEventCreate(BaseModel):
     event_id: str
     timestamp: str
-    density_estimate: int
+    scenario_phase: str
+    weather_condition: str
+    crowd_outside: int
     expected_crowd_size: int
     gate_data: Dict[str, str]
+    queue_data: Dict[str, int]
     heatmap_data: Dict[str, int]
     scenario_type: str
     status: str
