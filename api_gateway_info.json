@@ -1,10 +1,9 @@
 {
-  "api_id": "a5ogg9d18b",
-  "api_url": "https://a5ogg9d18b.execute-api.us-east-1.amazonaws.com/prod",
+  "api_id": "91tci351oe",
+  "api_url": "https://91tci351oe.execute-api.us-east-1.amazonaws.com/prod",
   "endpoints": [
-    "https://a5ogg9d18b.execute-api.us-east-1.amazonaws.com/prod/scenarios",
-    "https://a5ogg9d18b.execute-api.us-east-1.amazonaws.com/prod/demo/1",
-    "https://a5ogg9d18b.execute-api.us-east-1.amazonaws.com/prod/demo/2",
-    "https://a5ogg9d18b.execute-api.us-east-1.amazonaws.com/prod/demo/3"
-  ]
+    "https://91tci351oe.execute-api.us-east-1.amazonaws.com/prod/run-demo",
+    "https://91tci351oe.execute-api.us-east-1.amazonaws.com/prod/evaluation"
+  ],
+  "description": "Enhanced API with complete demo + evaluation"
 }
