@@ -1,3 +1,11 @@
+# DEPRECATED: This FastAPI implementation has been replaced with AWS Lambda + API Gateway
+# Use the following AWS services instead:
+# - Lambda: backend/lambda_functions/crowd_events.py
+# - API Gateway: backend/api_gateway_config.py
+# - DynamoDB: Managed through AWS Console or backend/aws_deployment.py
+# - SNS: For alerts and notifications
+# - SageMaker: For ML predictions
+
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -8,7 +16,8 @@ from typing import Dict, List, Optional
 from backend.models import CrowdSimulation
 from backend.live_data_generator import generate_multiple_live_events, CrowdLiveEvents
 
-app = FastAPI(title="Crowd Simulation API")
+# WARNING: This is legacy code. Use AWS Lambda + API Gateway for production
+app = FastAPI(title="Crowd Simulation API - LEGACY")
 crowd_db = CrowdSimulation()
 live_db = CrowdLiveEvents()
 
@@ -138,5 +147,12 @@ def get_live_events():
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
+    print("WARNING: This is legacy FastAPI code.")
+    print("For production, use AWS Lambda + API Gateway:")
+    print("1. Deploy Lambda: python aws_deployment.py")
+    print("2. Create API Gateway: python api_gateway_config.py")
+    print("3. Use SageMaker for ML predictions")
+    print("\nRunning legacy FastAPI for development only...")
+    
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -3,26 +3,73 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import random
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 import time
 from decimal import Decimal
 from backend.models import CrowdSimulation
 import pandas as pd
+import json
+import asyncio
+from threading import Thread
+import warnings
+warnings.filterwarnings('ignore')
 
-class CrowdLiveEvents:
+class EnhancedCrowdLiveEvents:
     def __init__(self):
         from config.settings import dynamodb
         self.dynamodb = dynamodb
         self.table_name = 'crowd_live_events'
         self._create_table_if_not_exists()
         self.table = self.dynamodb.Table(self.table_name)
+        
+        # Initialize ML system (with error handling for AWS connection delays)
+        self.ml_system = None
+        self._init_ml_system()
+        
+        # Real-time scenarios for Malaysian events
+        self.malaysian_scenarios = {
+            'concert_entry_rush': {
+                'name': 'Concert Entry Rush - KL Convention Centre',
+                'peak_times': ['19:00', '19:30', '20:00'],
+                'crowd_multiplier': 1.5,
+                'weather_impact': {'Heavy_Rain': 0.8, 'Light_Rain': 0.9, 'Cloudy': 1.0, 'Clear': 1.1}
+            },
+            'stadium_exit_wave': {
+                'name': 'Stadium Exit - Bukit Jalil National Stadium',
+                'peak_times': ['22:00', '22:15', '22:30'],
+                'crowd_multiplier': 2.0,
+                'parking_impact': 1.8
+            },
+            'festival_congestion': {
+                'name': 'Thaipusam/Hari Raya Festival Congestion',
+                'peak_times': ['12:00', '14:00', '16:00', '18:00'],
+                'crowd_multiplier': 1.3,
+                'food_court_surge': 2.5
+            }
+        }
+        
+        # Live streaming configuration
+        self.streaming_active = False
+        self.stream_interval = 15  # seconds
+        
+    def _init_ml_system(self):
+        """Initialize ML system with error handling"""
+        try:
+            print("🤖 Initializing enhanced ML system for real-time predictions...")
+            from backend.sagemaker_ml import SageMakerML
+            self.ml_system = SageMakerML()
+            print("✅ ML system ready for real-time predictions")
+        except Exception as e:
+            print(f"⚠️ ML system initialization delayed: {str(e)[:100]}...")
+            print("   Will retry during first prediction")
+            self.ml_system = None
     
     def _create_table_if_not_exists(self):
         try:
             table = self.dynamodb.Table(self.table_name)
             table.load()
-            print(f'Table {self.table_name} already exists')
+            print(f'✅ Table {self.table_name} already exists')
         except self.dynamodb.meta.client.exceptions.ResourceNotFoundException:
             table = self.dynamodb.create_table(
                 TableName=self.table_name,
@@ -35,14 +82,226 @@ class CrowdLiveEvents:
                 BillingMode='PAY_PER_REQUEST'
             )
             table.wait_until_exists()
-            print(f'Table {self.table_name} created successfully')
+            print(f'✅ Table {self.table_name} created successfully')
     
     def create_event(self, event_data):
-        return self.table.put_item(Item=event_data)
+        """Create event with real-time ML prediction"""
+        try:
+            # Add ML prediction if system is available
+            if self.ml_system:
+                try:
+                    ml_prediction = self.ml_system.predict(event_data)
+                    event_data.update(ml_prediction)
+                    event_data['prediction_timestamp'] = datetime.now(timezone.utc).isoformat()
+                    event_data['prediction_source'] = 'SageMaker_Enhanced'
+                except Exception as e:
+                    print(f"⚠️ ML prediction failed: {e}")
+                    event_data['prediction_error'] = str(e)
+            
+            return self.table.put_item(Item=event_data)
+        except Exception as e:
+            print(f"❌ Event creation failed: {e}")
+            return None
     
     def get_all_events(self):
         response = self.table.scan()
         return response.get('Items', [])
+    
+    def start_real_time_simulation(self, scenario_type='concert_entry_rush', duration_minutes=30):
+        """Start real-time crowd simulation for Malaysian events"""
+        print(f"🚀 Starting real-time simulation: {self.malaysian_scenarios[scenario_type]['name']}")
+        print(f"⏱️ Duration: {duration_minutes} minutes")
+        
+        self.streaming_active = True
+        
+        # Run simulation in separate thread
+        sim_thread = Thread(target=self._run_simulation, args=(scenario_type, duration_minutes))
+        sim_thread.daemon = True
+        sim_thread.start()
+        
+        return f"Real-time simulation started for {scenario_type}"
+    
+    def _run_simulation(self, scenario_type, duration_minutes):
+        """Run the real-time simulation"""
+        start_time = datetime.now()
+        end_time = start_time + timedelta(minutes=duration_minutes)
+        
+        scenario_config = self.malaysian_scenarios[scenario_type]
+        base_event = self._create_base_scenario(scenario_type)
+        
+        event_counter = 1
+        
+        while datetime.now() < end_time and self.streaming_active:
+            try:
+                # Generate live event with scenario-specific dynamics
+                live_event = self._generate_scenario_event(base_event, scenario_config, event_counter)
+                
+                # Create event with ML prediction
+                result = self.create_event(live_event)
+                
+                if result:
+                    print(f"📊 Live Event {event_counter}: {live_event['scenario_phase']} - "
+                          f"Risk: {live_event.get('risk_level', 'Predicting...')}")
+                
+                event_counter += 1
+                time.sleep(self.stream_interval)
+                
+            except Exception as e:
+                print(f"❌ Simulation error: {e}")
+                time.sleep(5)  # Wait before retrying
+        
+        print(f"✅ Simulation completed: {event_counter-1} events generated")
+        self.streaming_active = False
+    
+    def _create_base_scenario(self, scenario_type):
+        """Create base event for specific Malaysian scenarios"""
+        
+        if scenario_type == 'concert_entry_rush':
+            return {
+                'event_type': 'Concert',
+                'venue': 'KL Convention Centre',
+                'expected_crowd_size': 8000,
+                'scenario_phase': 'entry_start',
+                'weather_condition': 'Clear',
+                'crowd_outside': 200,
+                'transport_arrival_next_10min': 150,
+                'crowd_growth_rate': 45.0,
+                'queue_data': {'GateA': 50, 'GateB': 30, 'GateC': 20, 'GateD': 15},
+                'heatmap_data': {'SectionA': 100, 'SectionB': 80, 'SectionC': 90, 'SectionD': 70, 'Food Court': 25, 'Toilet': 15},
+                'parking_occupancy_percent': 45.0,
+                'staff_security': 12,
+                'staff_food': 6,
+                'staff_medical': 4
+            }
+        
+        elif scenario_type == 'stadium_exit_wave':
+            return {
+                'event_type': 'Football Match',
+                'venue': 'Bukit Jalil National Stadium',
+                'expected_crowd_size': 50000,
+                'scenario_phase': 'exit_start',
+                'weather_condition': 'Clear',
+                'crowd_outside': 0,
+                'transport_arrival_next_10min': 200,
+                'crowd_growth_rate': -85.0,
+                'queue_data': {'GateA': 0, 'GateB': 0, 'GateC': 0, 'GateD': 0},
+                'heatmap_data': {'SectionA': 2500, 'SectionB': 2800, 'SectionC': 2600, 'SectionD': 2400, 'Food Court': 150, 'Toilet': 200},
+                'parking_occupancy_percent': 95.0,
+                'staff_security': 25,
+                'staff_food': 15,
+                'staff_medical': 8
+            }
+        
+        elif scenario_type == 'festival_congestion':
+            return {
+                'event_type': 'Cultural Festival',
+                'venue': 'Batu Caves / Central Market',
+                'expected_crowd_size': 15000,
+                'scenario_phase': 'event_active',
+                'weather_condition': random.choice(['Clear', 'Cloudy', 'Light_Rain']),
+                'crowd_outside': 300,
+                'transport_arrival_next_10min': 80,
+                'crowd_growth_rate': 25.0,
+                'queue_data': {'GateA': 40, 'GateB': 35, 'GateC': 45, 'GateD': 30},
+                'heatmap_data': {'SectionA': 800, 'SectionB': 750, 'SectionC': 900, 'SectionD': 650, 'Food Court': 200, 'Toilet': 120},
+                'parking_occupancy_percent': 75.0,
+                'staff_security': 18,
+                'staff_food': 25,
+                'staff_medical': 6
+            }
+    
+    def _generate_scenario_event(self, base_event, scenario_config, counter):
+        """Generate event with scenario-specific dynamics"""
+        live_event = base_event.copy()
+        
+        # Generate unique event ID
+        live_event['event_id'] = f"LIVE_{scenario_config['name'][:3].upper()}_{counter:04d}"
+        live_event['timestamp'] = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+        
+        # Apply scenario-specific crowd dynamics
+        if 'crowd_multiplier' in scenario_config:
+            multiplier = scenario_config['crowd_multiplier']
+            # Add some randomness
+            multiplier *= random.uniform(0.8, 1.2)
+            
+            # Update crowd-related fields
+            for key in ['crowd_outside', 'transport_arrival_next_10min']:
+                if key in live_event:
+                    live_event[key] = int(live_event[key] * multiplier)
+        
+        # Apply weather impact if configured
+        if 'weather_impact' in scenario_config:
+            weather = random.choice(['Clear', 'Cloudy', 'Light_Rain', 'Heavy_Rain'])
+            live_event['weather_condition'] = weather
+            
+            if weather in scenario_config['weather_impact']:
+                impact = scenario_config['weather_impact'][weather]
+                live_event['crowd_outside'] = int(live_event['crowd_outside'] * impact)
+        
+        # Dynamic queue variations
+        for gate, base_queue in live_event['queue_data'].items():
+            # Add realistic queue fluctuations
+            variation = random.uniform(0.7, 1.4)
+            live_event['queue_data'][gate] = max(0, int(base_queue * variation))
+        
+        # Food court surge for festivals
+        if 'food_court_surge' in scenario_config:
+            surge = scenario_config['food_court_surge']
+            live_event['heatmap_data']['Food Court'] = int(
+                live_event['heatmap_data']['Food Court'] * surge * random.uniform(0.8, 1.2)
+            )
+        
+        # Parking impact for stadium exits
+        if 'parking_impact' in scenario_config:
+            impact = scenario_config['parking_impact']
+            live_event['parking_occupancy_percent'] = min(100, 
+                live_event['parking_occupancy_percent'] * impact * random.uniform(0.9, 1.1)
+            )
+        
+        # Evolve scenario phase based on time and type
+        live_event['scenario_phase'] = self._get_dynamic_phase(live_event, counter)
+        
+        return live_event
+    
+    def _get_dynamic_phase(self, event, counter):
+        """Dynamic phase progression based on event type and time"""
+        event_type = event.get('event_type', 'Concert')
+        
+        if event_type == 'Concert':
+            if counter <= 5:
+                return 'pre_event'
+            elif counter <= 15:
+                return 'entry_start'
+            elif counter <= 25:
+                return 'entry_rush'
+            elif counter <= 30:
+                return 'entry_complete'
+            else:
+                return 'event_active'
+        
+        elif event_type == 'Football Match':
+            if counter <= 10:
+                return 'event_end'
+            elif counter <= 20:
+                return 'exit_start'
+            elif counter <= 35:
+                return 'exit_rush'
+            else:
+                return 'exit_complete'
+        
+        elif event_type == 'Cultural Festival':
+            phases = ['event_active', 'halftime_prep', 'halftime_peak', 'halftime_return']
+            return random.choice(phases)
+        
+        return 'event_active'
+    
+    def stop_simulation(self):
+        """Stop the real-time simulation"""
+        self.streaming_active = False
+        print("🛑 Real-time simulation stopped")
+
+# Legacy compatibility
+CrowdLiveEvents = EnhancedCrowdLiveEvents
 
 def generate_live_event(base_event):
     new_event = base_event.copy()
@@ -148,9 +407,9 @@ def generate_multiple_live_events(count=50):
 
 def simulate_single_event():
     """Simulate one complete event lifecycle (2 hours)"""
-    import pandas as pd
+    from decimal import Decimal
     
-    csv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'dataset', 'training_data_500.csv')
+    csv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'dataset', 'enhanced_crowd_flow_enhance.csv')
     df = pd.read_csv(csv_path)
     live_db = CrowdLiveEvents()
     
@@ -160,6 +419,7 @@ def simulate_single_event():
     event_data = df[df['event_id'].str.startswith(selected_event)].sort_values('event_id')
     
     print(f"Starting live simulation of {selected_event} ({len(event_data)} phases)...")
+    print("SageMaker predictions enabled")
     print("Press Ctrl+C to stop")
     
     try:
@@ -226,8 +486,26 @@ def simulate_single_event():
                 'expected_action': row["recommended_action"]
             }
             
+            # Get ML predictions from SageMaker
+            # Initialize ML system for predictions
+            try:
+                from backend.sagemaker_ml import SageMakerML
+                ml_predictor = SageMakerML()
+            except Exception as e:
+                print(f"⚠️ ML system not available: {e}")
+                ml_predictor = None
+            predictions = ml_predictor.predict(live_event)
+            
+            # Add predictions to live event (convert floats to Decimal for DynamoDB)
+            from decimal import Decimal
+            for key, value in predictions.items():
+                if isinstance(value, float):
+                    live_event[key] = Decimal(str(value))
+                else:
+                    live_event[key] = value
+            
             live_db.create_event(live_event)
-            print(f'[{datetime.now().strftime("%H:%M:%S")}] Phase {idx+1}/{len(event_data)}: {live_event["scenario_phase"]} - Outside: {live_event["crowd_outside"]} - Risk: {live_event["original_risk_level"]}')
+            print(f'[{datetime.now().strftime("%H:%M:%S")}] Phase {idx+1}/{len(event_data)}: {live_event["scenario_phase"]} - Predicted Risk: {predictions["risk_level"]} - Action: {predictions["recommended_action"]}')
             
             time.sleep(3)  # 3 seconds between phases
             
