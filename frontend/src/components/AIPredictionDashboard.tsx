@@ -117,11 +117,20 @@ const AIPredictionDashboard: React.FC = () => {
         throw new Error('Invalid JSON response from API');
       }
 
-      console.log('API response:', result);
-      if (result && result.success) {
-        setDemoResults(result.data);
+      // Handle Lambda/API Gateway response with stringified body
+      let parsed = result;
+      if (parsed && typeof parsed.body === 'string') {
+        try {
+          parsed = JSON.parse(parsed.body);
+        } catch (e) {
+          // leave as is
+        }
+      }
+      console.log('Parsed API response:', parsed);
+      if (parsed && parsed.success) {
+        setDemoResults(parsed.data);
       } else {
-        throw new Error('Demo prediction failed: ' + JSON.stringify(result));
+        throw new Error('Demo prediction failed: ' + JSON.stringify(parsed));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Demo prediction failed');
