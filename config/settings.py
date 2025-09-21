@@ -3,7 +3,7 @@ import os
 import boto3
 
 # Load .env file
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Create boto3 session with session token
 session = boto3.session.Session(
@@ -13,7 +13,9 @@ session = boto3.session.Session(
     region_name=os.getenv("AWS_DEFAULT_REGION")
 )
 
-# Example: check identity
-sts = session.client("sts")
-identity = sts.get_caller_identity()
-print("Connected as:", identity)
+# AWS clients
+dynamodb = session.resource("dynamodb")
+lambda_client = session.client("lambda")
+sagemaker = session.client("sagemaker")
+sns = session.client("sns")
+apigateway = session.client("apigateway")

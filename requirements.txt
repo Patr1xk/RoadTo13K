@@ -5,3 +5,4 @@ python-dotenv  # Load AWS credentials & configs from .env file
 fastapi        # To build your backend API endpoints
 uvicorn        # ASGI server to run FastAPI
 pydantic       # Data validation (request/response models)
+pandas         # Data processing for CSV files
