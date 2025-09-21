@@ -2,8 +2,8 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.live_data_generator import CrowdLiveEvents
-from backend.simple_predictor import SimplePredictor
+from live_data_generator import CrowdLiveEvents
+from simple_predictor import SimplePredictor
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import json

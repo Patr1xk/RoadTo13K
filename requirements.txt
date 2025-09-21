@@ -6,6 +6,10 @@ fastapi>=0.100.0
 uvicorn>=0.22.0
 pydantic>=2.0.0
 
+# Frontend Integration
+flask>=2.3.0
+flask-cors>=4.0.0
+
 # Data Processing & ML (Python 3.13 compatible)
 pandas>=2.0.0
 numpy>=1.26.0

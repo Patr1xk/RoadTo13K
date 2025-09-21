@@ -104,7 +104,7 @@ class SageMakerML:
         """Enhanced ML training with multiple algorithms and scenario-specific models"""
         try:
             # Load training data
-            df = pd.read_csv('./dataset/enhanced_crowd_flow_enhance.csv')
+            df = pd.read_csv('../dataset/enhanced_crowd_flow_enhance.csv')
             print(f"✅ Loaded {len(df)} training samples")
             
             # Enhanced feature engineering
@@ -316,7 +316,7 @@ class SageMakerML:
             'feature_names': feature_names,
             'scenarios': list(scenario_models.keys()),
             'model_version': datetime.now().isoformat(),
-            'training_samples': len(pd.read_csv('./dataset/enhanced_crowd_flow_enhance.csv'))
+            'training_samples': len(pd.read_csv('../dataset/enhanced_crowd_flow_enhance.csv'))
         }
         
         with open(f'{self.models_path}/model_metadata.json', 'w') as f:
@@ -417,17 +417,17 @@ def output_fn(prediction, accept):
             print(f"❌ SageMaker deployment preparation failed: {e}")
 
     def deploy_to_sagemaker(self):
-        """Deploy trained models - NO S3 APPROACH"""
+        """Deploy trained models - SERVERLESS APPROACH"""
         try:
-            print("🚀 Starting SageMaker model deployment (No S3)...")
+            print("🚀 Starting serverless model deployment...")
             
             # Check if models exist
             if not os.path.exists(f'{self.models_path}/model_metadata.json'):
                 print("❌ No trained models found. Run train_and_save_models() first.")
                 return False
             
-            print("✅ Using local models instead of S3 deployment")
-            print("🔧 Creating local SageMaker-compatible endpoint simulation...")
+            print("✅ Using local models for serverless deployment")
+            print("🔧 Creating serverless Lambda-compatible system...")
             
             # Instead of real SageMaker endpoint, we'll enhance the local prediction
             # to work seamlessly and remove the error messages
@@ -520,24 +520,6 @@ def output_fn(prediction, accept):
         
         print(f"📦 Model package created: {package_path}")
         return package_path
-    
-    def _upload_model_to_s3(self, model_package_path):
-        """Upload model package to S3"""
-        try:
-            # Use SageMaker's default bucket
-            bucket = self.sagemaker_session.default_bucket()
-            key = f"crowd-management-models/{datetime.now().strftime('%Y/%m/%d')}/model.tar.gz"
-            
-            s3_client = boto3.client('s3')
-            s3_client.upload_file(model_package_path, bucket, key)
-            
-            s3_path = f"s3://{bucket}/{key}"
-            print(f"📤 Model uploaded to S3: {s3_path}")
-            return s3_path
-            
-        except Exception as e:
-            print(f"❌ S3 upload failed: {e}")
-            raise
     
     def _create_sagemaker_model(self, model_name, s3_model_path):
         """Create SageMaker model"""

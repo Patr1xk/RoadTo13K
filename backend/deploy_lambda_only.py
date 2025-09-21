@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 # Load environment variables
 # Load environment variables from config folder
-load_dotenv('config/.env')
+load_dotenv('../config/.env')
 
 class LambdaOnlyDeployer:
     def __init__(self):

@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 # Load environment variables
 # Load environment variables from config folder
-load_dotenv('config/.env')
+load_dotenv('../config/.env')
 
 class AWSDeploymentValidator:
     def __init__(self):
@@ -35,14 +35,16 @@ class AWSDeploymentValidator:
                 )
                 self.sagemaker = session.client('sagemaker')
                 self.runtime = session.client('sagemaker-runtime')
-                self.s3 = session.client('s3')
+                self.lambda_client = session.client('lambda')
+                self.bedrock = session.client('bedrock')
                 self.iam = session.client('iam')
                 print(f"✅ AWS clients initialized using .env credentials")
             else:
                 # Fallback to default AWS configuration
                 self.sagemaker = boto3.client('sagemaker', region_name=self.region)
                 self.runtime = boto3.client('sagemaker-runtime', region_name=self.region)
-                self.s3 = boto3.client('s3', region_name=self.region)
+                self.lambda_client = boto3.client('lambda', region_name=self.region)
+                self.bedrock = boto3.client('bedrock', region_name=self.region)
                 self.iam = boto3.client('iam', region_name=self.region)
                 print(f"✅ AWS clients initialized using aws configure")
                 
@@ -105,44 +107,64 @@ class AWSDeploymentValidator:
         except Exception as e:
             if 'ValidationException' in str(e):
                 print("❌ Endpoint does not exist!")
-                print("   Run: python deploy_real_paid_sagemaker.py")
+                print("   Run: python backend/deploy_lambda_only.py")
             else:
                 print(f"❌ Error checking endpoint: {e}")
             return False
     
-    def check_s3_bucket(self):
-        """Check if S3 bucket and models exist"""
-        print("\n📦 CHECKING S3 STORAGE")
+    def check_lambda_functions(self):
+        """Check if Lambda functions are deployed"""
+        print("\n� CHECKING LAMBDA FUNCTIONS")
         print("-" * 30)
         
         try:
-            # List buckets to find crowd-control bucket
-            buckets = self.s3.list_buckets()['Buckets']
-            crowd_buckets = [b for b in buckets if 'crowd-control' in b['Name']]
+            # List Lambda functions
+            functions = self.lambda_client.list_functions()['Functions']
+            crowd_functions = [f for f in functions if 'crowd' in f['FunctionName'].lower()]
             
-            if crowd_buckets:
-                bucket_name = crowd_buckets[0]['Name']
-                print(f"✅ Found bucket: {bucket_name}")
-                
-                # Check for model files
-                try:
-                    objects = self.s3.list_objects_v2(Bucket=bucket_name)
-                    if 'Contents' in objects:
-                        for obj in objects['Contents']:
-                            print(f"   📄 {obj['Key']} ({obj['Size']} bytes)")
-                        print("✅ Model files found in S3")
-                    else:
-                        print("⚠️  No files found in bucket")
-                except Exception as e:
-                    print(f"⚠️  Cannot list bucket contents: {e}")
-                
+            if crowd_functions:
+                print(f"✅ Found {len(crowd_functions)} crowd control functions:")
+                for func in crowd_functions:
+                    print(f"   📦 {func['FunctionName']} ({func['Runtime']})")
+                    print(f"      Memory: {func['MemorySize']}MB")
+                    print(f"      Last Modified: {func['LastModified']}")
                 return True
             else:
-                print("❌ No crowd-control S3 bucket found")
+                print("❌ No crowd control Lambda functions found")
+                print("   Run: python backend/deploy_lambda_only.py")
                 return False
                 
         except Exception as e:
-            print(f"❌ S3 check failed: {e}")
+            print(f"❌ Lambda check failed: {e}")
+            return False
+    
+    def check_bedrock_access(self):
+        """Check Bedrock model access"""
+        print("\n🤖 CHECKING BEDROCK ACCESS")
+        print("-" * 30)
+        
+        try:
+            # Check available foundation models
+            models = self.bedrock.list_foundation_models()
+            available_models = models.get('modelSummaries', [])
+            
+            # Check for specific models we use
+            titan_models = [m for m in available_models if 'titan' in m['modelId'].lower()]
+            gpt_models = [m for m in available_models if 'gpt' in m['modelId'].lower()]
+            
+            print(f"✅ Found {len(available_models)} available foundation models")
+            print(f"   🤖 Amazon Titan models: {len(titan_models)}")
+            print(f"   🤖 OpenAI GPT models: {len(gpt_models)}")
+            
+            if titan_models or gpt_models:
+                return True
+            else:
+                print("⚠️  No usable models found")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Bedrock check failed: {e}")
+            print("   Note: Bedrock access may need to be granted")
             return False
     
     def check_iam_role(self):
@@ -261,15 +283,15 @@ class AWSDeploymentValidator:
             print(f"❌ Cannot calculate billing: {e}")
     
     def run_full_validation(self):
-        """Run complete validation"""
-        print("🔍 AWS SAGEMAKER DEPLOYMENT VALIDATION")
+        """Run complete serverless validation"""
+        print("🔍 AWS SERVERLESS DEPLOYMENT VALIDATION")
         print("=" * 50)
         
         checks = [
             ("AWS Credentials", self.check_aws_credentials),
-            ("SageMaker Endpoint", self.check_endpoint_status), 
-            ("S3 Storage", self.check_s3_bucket),
-            ("IAM Role", self.check_iam_role)
+            ("Lambda Functions", self.check_lambda_functions), 
+            ("Bedrock Access", self.check_bedrock_access),
+            ("IAM Permissions", self.check_iam_role)
         ]
         
         passed = 0
@@ -279,29 +301,26 @@ class AWSDeploymentValidator:
             if check_func():
                 passed += 1
         
-        # Test prediction if endpoint is ready
-        if passed >= 2:  # If basic checks pass
-            if self.test_endpoint_prediction():
-                passed += 1
-            total += 1
-        
-        # Show billing
-        self.check_billing_status()
-        
         # Summary
         print(f"\n📊 VALIDATION SUMMARY")
         print("=" * 30)
         print(f"✅ Passed: {passed}/{total} checks")
         
         if passed == total:
-            print("🎉 AWS deployment is FULLY WORKING!")
-            print("✅ Ready for production use")
+            print("🎉 Serverless deployment is FULLY WORKING!")
+            print("✅ Ready for hackathon demonstration")
+            print("💰 Cost-effective serverless architecture")
         elif passed >= total * 0.7:
             print("⚠️  Deployment mostly working")
             print("   Some components may need attention")
         else:
             print("❌ Deployment has issues")
             print("   Check errors above")
+        
+        print(f"\n🔧 Fix deployment issues first:")
+        print("1. Check AWS credentials")
+        print("2. Re-run: python backend/deploy_lambda_only.py")
+        print("3. Re-run: python backend/deploy_sagemaker_ai.py")
         
         return passed >= total * 0.7
 

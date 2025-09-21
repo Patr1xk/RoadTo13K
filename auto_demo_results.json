@@ -1,0 +1,101 @@
+{
+  "status": "fully_deployed",
+  "timestamp": "2025-09-21T18:58:30.245536",
+  "traditional_ml": {
+    "status": "deployed",
+    "type": "AWS Lambda",
+    "functions": [
+      "malaysian-crowd-control-ai",
+      "CrowdControlAlertLambda"
+    ],
+    "accuracy": "86%",
+    "cost": "<$1/month",
+    "sample_prediction": {
+      "risk_level": "medium",
+      "risk_score": 0.75,
+      "confidence": 0.86,
+      "bottleneck_probability": 0.7,
+      "recommendations": {
+        "immediate_action": "Deploy additional crowd control staff",
+        "malaysian_context": "Consider cultural event dynamics and crowd behavior"
+      }
+    }
+  },
+  "sagemaker_ai": {
+    "status": "deployed",
+    "type": "AWS Bedrock",
+    "models": [
+      "Amazon Titan Express",
+      "Amazon Titan Lite",
+      "OpenAI GPT-OSS-120B",
+      "OpenAI GPT-OSS-20B"
+    ],
+    "features": "Advanced reasoning, natural language insights",
+    "cost": "$0.01/query",
+    "sample_prediction": {
+      "risk_assessment": {
+        "risk_level": "high",
+        "risk_score": 0.85,
+        "confidence": 0.92
+      },
+      "malaysian_insights": {
+        "cultural_factors": "Consider Merdeka Day crowd enthusiasm",
+        "communication_strategy": "Use bilingual announcements (English/Malay)",
+        "local_protocols": "Coordinate with DBKL and police"
+      },
+      "model_used": "Amazon Titan Text Express"
+    }
+  },
+  "predictions": [],
+  "deployment_info": {
+    "aws_account": "506688044538",
+    "aws_user": "nareen"
+  },
+  "errors": [],
+  "demo_scenarios": [
+    {
+      "id": 1,
+      "name": "KLCC New Year Countdown",
+      "location": "KLCC Twin Towers",
+      "type": "festival",
+      "crowd_density": 0.9,
+      "risk_level": "high",
+      "traditional_ml": "86% accuracy",
+      "sagemaker_ai": "Advanced cultural insights"
+    },
+    {
+      "id": 2,
+      "name": "Stadium Exit Rush",
+      "location": "Bukit Jalil National Stadium",
+      "type": "sports_exit",
+      "crowd_density": 0.8,
+      "risk_level": "medium",
+      "traditional_ml": "Fast response",
+      "sagemaker_ai": "Natural language analysis"
+    },
+    {
+      "id": 3,
+      "name": "Concert Entry Queue",
+      "location": "Axiata Arena",
+      "type": "concert_entry",
+      "crowd_density": 0.7,
+      "risk_level": "low",
+      "traditional_ml": "Cost-effective",
+      "sagemaker_ai": "Detailed recommendations"
+    }
+  ],
+  "validation": {
+    "lambda_functions": 2,
+    "bedrock_models": 98,
+    "timestamp": "2025-09-21T19:00:00.986769"
+  },
+  "deployment_time_seconds": 90.74,
+  "summary": {
+    "total_systems": 2,
+    "deployed_systems": 2,
+    "deployment_time": "2025-09-21T19:00:00.991718",
+    "ready_for_demo": true,
+    "cost_estimate": "<$2/month total",
+    "architecture": "Serverless (Lambda + Bedrock)"
+  }
+}

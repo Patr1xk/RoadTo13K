@@ -11,7 +11,7 @@ from datetime import datetime
 
 # Load AWS credentials
 from dotenv import load_dotenv
-load_dotenv('config/.env')
+load_dotenv('../config/.env')
 
 # Test sample data
 SAMPLE_CROWD_DATA = {

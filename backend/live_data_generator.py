@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 import uuid
 import time
 from decimal import Decimal
-from backend.models import CrowdSimulation
+from models import CrowdSimulation
 import pandas as pd
 import json
 import asyncio

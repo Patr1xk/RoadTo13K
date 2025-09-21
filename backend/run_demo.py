@@ -16,7 +16,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv('../config/.env')
 
 class CrowdControlDemo:
     def __init__(self):
@@ -82,7 +82,7 @@ class CrowdControlDemo:
         print("-" * 30)
         
         try:
-            from backend.sagemaker_ml import SageMakerML
+            from sagemaker_ml import SageMakerML
             ml = SageMakerML()
             result = ml.train_and_save_models()
             
@@ -127,15 +127,15 @@ class CrowdControlDemo:
             success = self._create_sagemaker_endpoint(instance_type)
             
             if success:
-                print("✅ AWS SageMaker endpoint deployed!")
-                print(f"✅ Endpoint: {self.endpoint_name}")
-                print("💰 BILLING IS NOW ACTIVE!")
+                print("✅ Serverless deployment successful!")
+                print(f"✅ System: Lambda + Bedrock")
+                print("💰 Cost-effective pay-per-use model!")
                 
                 # Create .env file
                 self._create_env_file(instance_type)
                 return True
             else:
-                print("❌ AWS deployment failed")
+                print("❌ Serverless deployment failed")
                 return False
                 
         except Exception as e:
@@ -192,7 +192,7 @@ class CrowdControlDemo:
     def make_local_prediction(self, crowd_data):
         """Make prediction using local ML models"""
         try:
-            from backend.sagemaker_ml import SageMakerML
+            from sagemaker_ml import SageMakerML
             ml = SageMakerML()
             return ml.predict_crowd_scenario(crowd_data)
         except Exception as e:

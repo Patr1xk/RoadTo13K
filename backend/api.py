@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict, List, Optional
-from backend.models import CrowdSimulation
-from backend.live_data_generator import generate_multiple_live_events, CrowdLiveEvents
+from models import CrowdSimulation
+from live_data_generator import generate_multiple_live_events, CrowdLiveEvents
 
 # WARNING: This is legacy code. Use AWS Lambda + API Gateway for production
 app = FastAPI(title="Crowd Simulation API - LEGACY")

@@ -12,7 +12,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables from config folder
-load_dotenv('config/.env')
+load_dotenv('../config/.env')
 
 class SageMakerAIDeployer:
     def __init__(self):
