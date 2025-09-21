@@ -13,7 +13,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+# Load environment variables from config folder
+load_dotenv('config/.env')
 
 class LambdaOnlyDeployer:
     def __init__(self):
